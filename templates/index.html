@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rig Control</title>
+    <style>
+        body {
+            background-color: green;
+            color: black;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #display {
+            font-size: 10em;
+        }
+    </style>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+</head>
+<body>
+    <div id="display">Loading...</div>
+
+<script>
+    const socket = io();
+
+    function updateDisplay(frequency, mode) {
+        const display = document.getElementById('display');
+        display.innerText = `${(frequency / 1e6).toFixed(1)} MHz ${mode}`;
+    }
+
+    socket.on('connect', () => {
+        socket.emit('get_frequency');
+        socket.emit('get_mode');
+    });
+
+    socket.on('frequency', (data) => {
+        const frequency = parseFloat(data.frequency); // Parse the frequency as a float
+        const mode = document.getElementById('display').innerText.split(' ')[2];
+        updateDisplay(frequency, mode);
+        console.log('Frequency:', frequency); // Log the frequency for debugging
+    });
+
+    socket.on('mode', (data) => {
+        const mode = data.mode;
+        const frequency = parseFloat(document.getElementById('display').innerText.split(' ')[0]) * 1e6;
+        updateDisplay(frequency, mode);
+    });
+
+    setInterval(() => {
+        socket.emit('get_frequency');
+        socket.emit('get_mode');
+    }, 1000);
+</script>
+
+</body>
+</html>
